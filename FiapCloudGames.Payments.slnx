@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/FiapCloudGames.Payments.Api/FiapCloudGames.Payments.Api.csproj" />
+    <Project Path="src/FiapCloudGames.Payments.Application/FiapCloudGames.Payments.Application.csproj" />
+    <Project Path="src/FiapCloudGames.Payments.Contracts/FiapCloudGames.Payments.Contracts.csproj" />
+    <Project Path="src/FiapCloudGames.Payments.Domain/FiapCloudGames.Payments.Domain.csproj" />
+    <Project Path="src/FiapCloudGames.Payments.Infrastructure/FiapCloudGames.Payments.Infrastructure.csproj" />
+    <Project Path="src/FiapCloudGames.Payments.Presentation/FiapCloudGames.Payments.Presentation.csproj" />
+    <Project Path="src/FiapCloudGames.Payments.Migrations/FiapCloudGames.Payments.Migrations.csproj" />
+    <Project Path="src/FiapCloudGames.Payments.Worker/FiapCloudGames.Payments.Worker.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/FiapCloudGames.Payments.UnitTests/FiapCloudGames.Payments.UnitTests.csproj" />
+    <Project Path="tests/FiapCloudGames.Payments.IntegrationTests/FiapCloudGames.Payments.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

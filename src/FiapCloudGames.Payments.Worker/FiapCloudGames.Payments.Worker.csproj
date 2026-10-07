@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+
+  <ItemGroup>
+  <PackageReference Include="FiapCloudGames.BuildingBlocks" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="RabbitMQ.Client" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../FiapCloudGames.Payments.Application/FiapCloudGames.Payments.Application.csproj" />
+    <ProjectReference Include="../FiapCloudGames.Payments.Domain/FiapCloudGames.Payments.Domain.csproj" />
+    <ProjectReference Include="../FiapCloudGames.Payments.Infrastructure/FiapCloudGames.Payments.Infrastructure.csproj" />
+    <ProjectReference Include="..\FiapCloudGames.Payments.Contracts\FiapCloudGames.Payments.Contracts.csproj" />
+  </ItemGroup>
+
+</Project>

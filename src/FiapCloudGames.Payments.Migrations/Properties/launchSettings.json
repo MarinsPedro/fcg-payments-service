@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "FiapCloudGames.Payments.Migrations": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
