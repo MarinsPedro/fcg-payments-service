@@ -11,6 +11,7 @@ public sealed class Payment
         decimal amount,
         string provider,
         string idempotencyKey,
+        string correlationId,
         DateTimeOffset createdAtUtc)
     {
         if (id == Guid.Empty) throw new ArgumentException("O id do pagamento é obrigatório.", nameof(id));
@@ -26,6 +27,9 @@ public sealed class Payment
         Amount = decimal.Round(amount, 2, MidpointRounding.ToEven);
         Provider = provider.Trim();
         IdempotencyKey = idempotencyKey.Trim();
+        CorrelationId = string.IsNullOrWhiteSpace(correlationId)
+            ? Guid.NewGuid().ToString("N")
+            : correlationId.Trim();
         Status = PaymentStatus.Pending;
         CreatedAtUtc = createdAtUtc;
         UpdatedAtUtc = createdAtUtc;
@@ -40,6 +44,7 @@ public sealed class Payment
     public string? ProviderTransactionId { get; private set; }
     public string? FailureReason { get; private set; }
     public string IdempotencyKey { get; private set; } = string.Empty;
+    public string CorrelationId { get; private set; } = string.Empty;
     public DateTimeOffset CreatedAtUtc { get; private set; }
     public DateTimeOffset UpdatedAtUtc { get; private set; }
 
@@ -49,8 +54,9 @@ public sealed class Payment
         decimal amount,
         string provider,
         string idempotencyKey,
+        string correlationId,
         DateTimeOffset now) =>
-        new(Guid.NewGuid(), orderId, userId, amount, provider, idempotencyKey, now);
+        new(Guid.NewGuid(), orderId, userId, amount, provider, idempotencyKey, correlationId, now);
 
     public void MarkPaid(string providerTransactionId, DateTimeOffset now)
     {

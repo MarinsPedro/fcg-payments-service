@@ -285,20 +285,26 @@ public sealed class OutboxPublisherWorker(
             routingKey: "payments.failed",
             cancellationToken: cancellationToken);
 
-        const string entitlementsQueue =
-            "fcg.entitlements.payment-paid";
+        const string notificationsQueue =
+            "fcg.notifications.payment-status";
 
         await _channel.QueueDeclareAsync(
-            queue: entitlementsQueue,
+            queue: notificationsQueue,
             durable: true,
             exclusive: false,
             autoDelete: false,
             cancellationToken: cancellationToken);
 
         await _channel.QueueBindAsync(
-            queue: entitlementsQueue,
+            queue: notificationsQueue,
             exchange: _exchange,
             routingKey: "payments.paid",
+            cancellationToken: cancellationToken);
+
+        await _channel.QueueBindAsync(
+            queue: notificationsQueue,
+            exchange: _exchange,
+            routingKey: "payments.failed",
             cancellationToken: cancellationToken);
     }
 

@@ -1,4 +1,5 @@
 using FiapCloudGames.BuildingBlocks.Exceptions;
+using FiapCloudGames.BuildingBlocks.Observability;
 using FiapCloudGames.Payments.Application.Abstractions.Payments;
 using FiapCloudGames.Payments.Application.Abstractions.Persistence;
 using FiapCloudGames.Payments.Application.Features.Payments.Common;
@@ -10,6 +11,7 @@ public sealed class CreatePaymentService(
     IPaymentRepository payments,
     IPaymentsUnitOfWork unitOfWork,
     IPaymentProvider provider,
+    ICorrelationContext correlation,
     TimeProvider clock)
 {
     public async Task<PaymentResult> ExecuteAsync(CreatePaymentInput input, CancellationToken cancellationToken)
@@ -32,7 +34,14 @@ public sealed class CreatePaymentService(
         if (sameOrder is not null)
             throw AppException.Conflict("Já existe um pagamento para o pedido informado.");
 
-        var payment = Payment.Create(input.OrderId, input.UserId, input.Amount, provider.Name, input.IdempotencyKey, clock.GetUtcNow());
+        var payment = Payment.Create(
+            input.OrderId,
+            input.UserId,
+            input.Amount,
+            provider.Name,
+            input.IdempotencyKey,
+            correlation.CorrelationId,
+            clock.GetUtcNow());
         await payments.AddAsync(payment, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return PaymentResult.From(payment);

@@ -12,6 +12,7 @@ public sealed record PaymentResult(
     string? ProviderTransactionId,
     string? FailureReason,
     string IdempotencyKey,
+    string CorrelationId,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc)
 {
@@ -25,6 +26,7 @@ public sealed record PaymentResult(
         payment.ProviderTransactionId,
         payment.FailureReason,
         payment.IdempotencyKey,
+        payment.CorrelationId,
         payment.CreatedAtUtc,
         payment.UpdatedAtUtc);
 }

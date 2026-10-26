@@ -6,6 +6,7 @@
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="MassTransit.EntityFrameworkCore" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="FiapCloudGames.Payments.Migrations" />

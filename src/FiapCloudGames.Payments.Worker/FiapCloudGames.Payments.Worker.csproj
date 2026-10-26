@@ -3,7 +3,7 @@
   <ItemGroup>
   <PackageReference Include="FiapCloudGames.BuildingBlocks" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
-    <PackageReference Include="RabbitMQ.Client" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
   </ItemGroup>
 
   <ItemGroup>

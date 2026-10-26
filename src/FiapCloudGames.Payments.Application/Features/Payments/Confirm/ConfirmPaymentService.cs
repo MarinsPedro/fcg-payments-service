@@ -51,6 +51,9 @@ public sealed class ConfirmPaymentService(
         }
 
         var now = clock.GetUtcNow();
+        var correlationId = string.IsNullOrWhiteSpace(payment.CorrelationId)
+            ? correlation.CorrelationId
+            : payment.CorrelationId;
 
         if (!result.Success || string.IsNullOrWhiteSpace(result.TransactionId))
         {
@@ -73,7 +76,7 @@ public sealed class ConfirmPaymentService(
                 OutboxMessage.Create(
                     "PaymentFailedEvent",
                     payload,
-                    correlation.CorrelationId,
+                    correlationId,
                     now),
                 cancellationToken);
 
@@ -97,7 +100,7 @@ public sealed class ConfirmPaymentService(
             OutboxMessage.Create(
                 "PaymentPaidEvent",
                 paidPayload,
-                correlation.CorrelationId,
+                correlationId,
                 now),
             cancellationToken);
 

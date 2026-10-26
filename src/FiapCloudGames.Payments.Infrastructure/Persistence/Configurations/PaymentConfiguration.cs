@@ -19,6 +19,7 @@ internal sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
         builder.Property(x => x.ProviderTransactionId).HasColumnName("provider_transaction_id").HasMaxLength(128);
         builder.Property(x => x.FailureReason).HasColumnName("failure_reason").HasMaxLength(500);
         builder.Property(x => x.IdempotencyKey).HasColumnName("idempotency_key").HasMaxLength(128).IsRequired();
+        builder.Property(x => x.CorrelationId).HasColumnName("correlation_id").HasMaxLength(128).IsRequired();
         builder.Property(x => x.CreatedAtUtc).HasColumnName("created_at_utc").IsRequired();
         builder.Property(x => x.UpdatedAtUtc).HasColumnName("updated_at_utc").IsRequired();
         builder.HasIndex(x => x.OrderId).IsUnique().HasDatabaseName("ux_payments_order_id");

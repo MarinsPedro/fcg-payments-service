@@ -13,11 +13,13 @@ public sealed record PaymentResponse(
     string? ProviderTransactionId,
     string? FailureReason,
     string IdempotencyKey,
+    string CorrelationId,
     DateTimeOffset CreatedAtUtc,
     DateTimeOffset UpdatedAtUtc)
 {
     public static PaymentResponse From(PaymentResult result) => new(
         result.Id, result.OrderId, result.UserId, result.Amount, result.Status,
         result.Provider, result.ProviderTransactionId, result.FailureReason,
-        result.IdempotencyKey, result.CreatedAtUtc, result.UpdatedAtUtc);
+        result.IdempotencyKey, result.CorrelationId,
+        result.CreatedAtUtc, result.UpdatedAtUtc);
 }
