@@ -1,5 +1,4 @@
 using FiapCloudGames.Payments.Application.Abstractions.Persistence;
-using FiapCloudGames.Payments.Domain.Outbox;
 using FiapCloudGames.Payments.Domain.Payments;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -11,9 +10,6 @@ public sealed class PaymentsDbContext(
     : DbContext(options), IPaymentsUnitOfWork
 {
     public DbSet<Payment> Payments => Set<Payment>();
-
-    // Outbox manual - será removido depois da troca do fluxo de publicação
-    public DbSet<OutboxMessage> OutboxMessages => Set<OutboxMessage>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

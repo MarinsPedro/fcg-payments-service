@@ -1,6 +1,10 @@
+
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <ProjectReference Include="../FiapCloudGames.Payments.Domain/FiapCloudGames.Payments.Domain.csproj" />
+    <ProjectReference Include="../FiapCloudGames.Payments.Contracts/FiapCloudGames.Payments.Contracts.csproj" />
+
     <PackageReference Include="FiapCloudGames.BuildingBlocks" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
   </ItemGroup>
 </Project>

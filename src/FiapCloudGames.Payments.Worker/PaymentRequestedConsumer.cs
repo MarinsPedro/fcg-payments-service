@@ -1,5 +1,6 @@
 using FiapCloudGames.Payments.Application.Features.Payments.Create;
 using FiapCloudGames.Payments.Contracts.Events;
+using FiapCloudGames.Payments.Contracts.Events.V1;
 using MassTransit;
 
 namespace FiapCloudGames.Payments.Worker;
@@ -8,10 +9,10 @@ public sealed class PaymentRequestedConsumer(
     CreatePaymentService createService,
     MessageCorrelationContext correlationContext,
     ILogger<PaymentRequestedConsumer> logger)
-    : IConsumer<PaymentRequestedEvent>
+    : IConsumer<PaymentRequestedEventV1>
 {
     public async Task Consume(
-        ConsumeContext<PaymentRequestedEvent> context)
+        ConsumeContext<PaymentRequestedEventV1> context)
     {
         var paymentRequested = context.Message;
 

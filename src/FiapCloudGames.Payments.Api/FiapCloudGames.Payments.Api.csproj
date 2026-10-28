@@ -4,5 +4,6 @@
     <ProjectReference Include="../FiapCloudGames.Payments.Presentation/FiapCloudGames.Payments.Presentation.csproj" />
     <PackageReference Include="FiapCloudGames.BuildingBlocks" />
     <PackageReference Include="Swashbuckle.AspNetCore" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
   </ItemGroup>
 </Project>

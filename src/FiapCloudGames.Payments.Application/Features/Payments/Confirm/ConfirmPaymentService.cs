@@ -1,17 +1,18 @@
-using System.Text.Json;
+
 using FiapCloudGames.BuildingBlocks.Exceptions;
 using FiapCloudGames.BuildingBlocks.Observability;
 using FiapCloudGames.Payments.Application.Abstractions.Payments;
 using FiapCloudGames.Payments.Application.Abstractions.Persistence;
 using FiapCloudGames.Payments.Application.Features.Payments.Common;
-using FiapCloudGames.Payments.Domain.Outbox;
+using FiapCloudGames.Payments.Contracts.Events.V1;
 using FiapCloudGames.Payments.Domain.Payments;
+using MassTransit;
 
 namespace FiapCloudGames.Payments.Application.Features.Payments.Confirm;
 
 public sealed class ConfirmPaymentService(
     IPaymentRepository payments,
-    IOutboxRepository outbox,
+    IPublishEndpoint publishEndpoint,
     IPaymentsUnitOfWork unitOfWork,
     IPaymentProvider provider,
     ICorrelationContext correlation,
@@ -24,7 +25,7 @@ public sealed class ConfirmPaymentService(
         var payment = await payments.GetByIdAsync(id, cancellationToken)
             ?? throw AppException.NotFound("Pagamento não encontrado.");
 
-        // Já foi processado anteriormente.
+        // Pagamento já processado.
         // Não chama o provider novamente.
         if (payment.Status is PaymentStatus.Paid or PaymentStatus.Failed)
             return PaymentResult.From(payment);
@@ -51,10 +52,12 @@ public sealed class ConfirmPaymentService(
         }
 
         var now = clock.GetUtcNow();
+
         var correlationId = string.IsNullOrWhiteSpace(payment.CorrelationId)
             ? correlation.CorrelationId
             : payment.CorrelationId;
 
+        // Pagamento recusado ou sem transação válida.
         if (!result.Success || string.IsNullOrWhiteSpace(result.TransactionId))
         {
             var failureReason =
@@ -63,21 +66,18 @@ public sealed class ConfirmPaymentService(
 
             payment.MarkFailed(failureReason, now);
 
-            var payload = JsonSerializer.Serialize(
-                new PaymentFailedOutboxPayload(
+            await publishEndpoint.Publish(
+                new PaymentFailedEventV1(
                     payment.Id,
                     payment.OrderId,
                     payment.UserId,
                     payment.Amount,
                     failureReason,
-                    now));
-
-            await outbox.AddAsync(
-                OutboxMessage.Create(
-                    "PaymentFailedEvent",
-                    payload,
-                    correlationId,
                     now),
+                context =>
+                {
+                    ApplyCorrelationId(context, correlationId);
+                },
                 cancellationToken);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -85,43 +85,35 @@ public sealed class ConfirmPaymentService(
             return PaymentResult.From(payment);
         }
 
+        // Pagamento aprovado.
         payment.MarkPaid(result.TransactionId, now);
 
-        var paidPayload = JsonSerializer.Serialize(
-            new PaymentPaidOutboxPayload(
+        await publishEndpoint.Publish(
+            new PaymentPaidEventV1(
                 payment.Id,
                 payment.OrderId,
                 payment.UserId,
                 payment.Amount,
                 payment.ProviderTransactionId!,
-                now));
-
-        await outbox.AddAsync(
-            OutboxMessage.Create(
-                "PaymentPaidEvent",
-                paidPayload,
-                correlationId,
                 now),
+            context =>
+            {
+                ApplyCorrelationId(context, correlationId);
+            },
             cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return PaymentResult.From(payment);
     }
+
+    private static void ApplyCorrelationId(
+        PublishContext context,
+        string? correlationId)
+    {
+        if (Guid.TryParse(correlationId, out var parsed))
+            {
+                context.CorrelationId = parsed;
+            }
+    }
 }
-
-public sealed record PaymentPaidOutboxPayload(
-    Guid PaymentId,
-    Guid OrderId,
-    Guid UserId,
-    decimal Amount,
-    string ProviderTransactionId,
-    DateTimeOffset OccurredAtUtc);
-
-public sealed record PaymentFailedOutboxPayload(
-    Guid PaymentId,
-    Guid OrderId,
-    Guid UserId,
-    decimal Amount,
-    string FailureReason,
-    DateTimeOffset OccurredAtUtc);

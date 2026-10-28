@@ -1,4 +1,4 @@
-using FiapCloudGames.Payments.Application.Features.Payments.Cancel;
+
 using FiapCloudGames.Payments.Application.Features.Payments.Confirm;
 using FiapCloudGames.Payments.Application.Features.Payments.Create;
 using FiapCloudGames.Payments.Application.Features.Payments.Get;
@@ -13,7 +13,6 @@ public static class DependencyInjection
         services.AddScoped<CreatePaymentService>();
         services.AddScoped<GetPaymentService>();
         services.AddScoped<ConfirmPaymentService>();
-        services.AddScoped<CancelPaymentService>();
         return services;
     }
 }

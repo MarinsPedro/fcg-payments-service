@@ -1,4 +1,3 @@
-using FiapCloudGames.Payments.Application.Features.Payments.Cancel;
 using FiapCloudGames.Payments.Application.Features.Payments.Confirm;
 using FiapCloudGames.Payments.Application.Features.Payments.Create;
 using FiapCloudGames.Payments.Application.Features.Payments.Get;
@@ -44,11 +43,5 @@ public sealed class PaymentsController : ControllerBase
     [HttpPost("{id:guid}/confirm")]
     [ProducesResponseType<PaymentResponse>(StatusCodes.Status200OK)]
     public async Task<ActionResult<PaymentResponse>> ConfirmAsync(Guid id, [FromServices] ConfirmPaymentService service, CancellationToken cancellationToken) =>
-        Ok(PaymentResponse.From(await service.ExecuteAsync(id, cancellationToken)));
-
-    [Authorize(Policy = PaymentsPolicies.Cancel)]
-    [HttpPost("{id:guid}/cancel")]
-    [ProducesResponseType<PaymentResponse>(StatusCodes.Status200OK)]
-    public async Task<ActionResult<PaymentResponse>> CancelAsync(Guid id, [FromServices] CancelPaymentService service, CancellationToken cancellationToken) =>
         Ok(PaymentResponse.From(await service.ExecuteAsync(id, cancellationToken)));
 }

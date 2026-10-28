@@ -2,7 +2,6 @@ using FiapCloudGames.BuildingBlocks.Authentication;
 using FiapCloudGames.Payments.Application;
 using FiapCloudGames.Payments.Application.Abstractions.Payments;
 using FiapCloudGames.Payments.Application.Abstractions.Persistence;
-using FiapCloudGames.Payments.Domain.Outbox;
 using FiapCloudGames.Payments.Domain.Payments;
 using FiapCloudGames.Payments.Infrastructure.Health;
 using FiapCloudGames.Payments.Infrastructure.Payments;
@@ -32,7 +31,6 @@ public static class DependencyInjection
             provider => provider.GetRequiredService<PaymentsDbContext>());
 
         services.AddScoped<IPaymentRepository, PaymentRepository>();
-        services.AddScoped<IOutboxRepository, OutboxRepository>();
 
         return services;
     }
