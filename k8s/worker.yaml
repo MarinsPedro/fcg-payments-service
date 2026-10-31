@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-worker
+  namespace: fcg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-worker
+  template:
+    metadata:
+      labels:
+        app: payments-worker
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: payments-worker
+          image: fcg-payments-worker:local
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DOTNET_ENVIRONMENT
+              value: Development
+            - name: ConnectionStrings__Database
+              valueFrom:
+                secretKeyRef:
+                  name: fcg-dev-secrets
+                  key: payments-connection-string
+            - name: RabbitMq__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: rabbitmq-host
+            - name: RabbitMq__Port
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: rabbitmq-port
+            - name: RabbitMq__Username
+              valueFrom:
+                secretKeyRef:
+                  name: fcg-dev-secrets
+                  key: rabbitmq-username
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: fcg-dev-secrets
+                  key: rabbitmq-password
+            - name: RabbitMq__Exchange
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: rabbitmq-exchange
+            - name: Outbox__BatchSize
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: outbox-batch-size
+            - name: Outbox__PollingIntervalSeconds
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: outbox-polling-interval-seconds
+            - name: FakePaymentProvider__ApprovalRate
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: fake-payment-approval-rate
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

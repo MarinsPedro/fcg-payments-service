@@ -1,0 +1,118 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: payments-api
+  namespace: fcg
+  labels:
+    app: payments-api
+spec:
+  selector:
+    app: payments-api
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-api
+  namespace: fcg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-api
+  template:
+    metadata:
+      labels:
+        app: payments-api
+    spec:
+      containers:
+        - name: payments-api
+          image: fcg-payments-api:local
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Development
+            - name: ASPNETCORE_URLS
+              value: http://+:8080
+            - name: ConnectionStrings__Database
+              valueFrom:
+                secretKeyRef:
+                  name: fcg-dev-secrets
+                  key: payments-connection-string
+            - name: RabbitMq__Host
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: rabbitmq-host
+            - name: RabbitMq__Port
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: rabbitmq-port
+            - name: RabbitMq__Username
+              valueFrom:
+                secretKeyRef:
+                  name: fcg-dev-secrets
+                  key: rabbitmq-username
+            - name: RabbitMq__Password
+              valueFrom:
+                secretKeyRef:
+                  name: fcg-dev-secrets
+                  key: rabbitmq-password
+            - name: Authentication__MetadataAddress
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: identity-metadata-address
+            - name: Authentication__Issuer
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: identity-issuer
+            - name: Authentication__Audience
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: payments-audience
+            - name: Authentication__AllowedTokenUses__0
+              value: service
+            - name: Authentication__RequireHttpsMetadata
+              value: "false"
+            - name: FakePaymentProvider__ApprovalRate
+              valueFrom:
+                configMapKeyRef:
+                  name: fcg-config
+                  key: fake-payment-approval-rate
+          startupProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 12
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
