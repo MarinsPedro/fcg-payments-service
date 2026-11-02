@@ -5,21 +5,22 @@ WORKDIR /app
 EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
-WORKDIR /src
-
-COPY . .
+WORKDIR /workspace
+COPY --from=buildingblocks / /workspace/fcg-dotnet-building-blocks
+COPY . /workspace/fcg-payments-service
+WORKDIR /workspace/fcg-payments-service
 
 RUN --mount=type=secret,id=nuget_config,target=/root/.nuget/NuGet/NuGet.Config,required=true \
-    dotnet restore FiapCloudGames.Payments.slnx --configfile /root/.nuget/NuGet/NuGet.Config
+    dotnet restore FiapCloudGames.Payments.slnx -p:UseLocalBuildingBlocks=true --configfile /root/.nuget/NuGet/NuGet.Config
 
 RUN dotnet publish src/FiapCloudGames.Payments.Api/FiapCloudGames.Payments.Api.csproj \
-    -c Release --no-restore -o /app/publish
+    -c Release -p:UseLocalBuildingBlocks=true --no-restore -o /app/publish
 
 RUN dotnet publish src/FiapCloudGames.Payments.Migrations/FiapCloudGames.Payments.Migrations.csproj \
-    -c Release --no-restore -o /app/migrations
+    -c Release -p:UseLocalBuildingBlocks=true --no-restore -o /app/migrations
 
 RUN dotnet publish src/FiapCloudGames.Payments.Worker/FiapCloudGames.Payments.Worker.csproj \
-    -c Release --no-restore -o /app/worker
+    -c Release -p:UseLocalBuildingBlocks=true --no-restore -o /app/worker
 
 
 FROM runtime AS migrations

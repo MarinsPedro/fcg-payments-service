@@ -6,7 +6,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <LangVersion>latest</LangVersion>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <UseLocalBuildingBlocks Condition="'$(UseLocalBuildingBlocks)' == ''">false</UseLocalBuildingBlocks>
+    <UseLocalBuildingBlocks Condition="'$(UseLocalBuildingBlocks)' == ''">true</UseLocalBuildingBlocks>
     <LocalBuildingBlocksProject>$(MSBuildThisFileDirectory)..\fcg-dotnet-building-blocks\src\FiapCloudGames.BuildingBlocks\FiapCloudGames.BuildingBlocks.csproj</LocalBuildingBlocksProject>
   </PropertyGroup>
 

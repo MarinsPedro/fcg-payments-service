@@ -1,6 +1,21 @@
+# Lean Docker build context - source & tests remain available for slnx restore.
+.git
+.github
+.vs
+.idea
 **/bin
 **/obj
-.git
-.gitignore
-README.md
-NuGet.Docker.Config
+node_modules
+TestResults
+coverage
+artifacts
+runtime
+.env
+.env.*
+*.pfx
+*.p12
+*.pem
+*.key
+*.user
+NuGet.Private.Config
+NuGet.Config.local

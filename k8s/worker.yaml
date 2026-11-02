@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments-worker
+  namespace: fcg
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments-worker
+  template:
+    metadata:
+      labels:
+        app: payments-worker
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+      - name: payments-worker
+        image: fcg-payments-worker:local
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: ConnectionStrings__Database
+          valueFrom:
+            secretKeyRef:
+              name: fcg-dev-secrets
+              key: payments-connection-string
+        - name: RabbitMq__Username
+          valueFrom:
+            secretKeyRef:
+              name: fcg-dev-secrets
+              key: rabbitmq-username
+        - name: RabbitMq__Password
+          valueFrom:
+            secretKeyRef:
+              name: fcg-dev-secrets
+              key: rabbitmq-password
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        envFrom:
+        - configMapRef:
+            name: fcg-payments-worker-config
