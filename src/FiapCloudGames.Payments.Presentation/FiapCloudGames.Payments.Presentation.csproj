@@ -3,6 +3,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <ProjectReference Include="../FiapCloudGames.Payments.Application/FiapCloudGames.Payments.Application.csproj" />
     <ProjectReference Include="../FiapCloudGames.Payments.Domain/FiapCloudGames.Payments.Domain.csproj" />
-    <PackageReference Include="FiapCloudGames.BuildingBlocks" />
+    <ProjectReference Include="$(LocalBuildingBlocksProject)" Condition="'$(UseLocalBuildingBlocks)' == 'true'" />
+    <PackageReference Include="FiapCloudGames.BuildingBlocks" Condition="'$(UseLocalBuildingBlocks)' != 'true'" />
   </ItemGroup>
 </Project>

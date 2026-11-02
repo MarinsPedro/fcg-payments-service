@@ -1,9 +1,11 @@
 using FiapCloudGames.BuildingBlocks.Authentication;
 using FiapCloudGames.Payments.Application;
+using FiapCloudGames.Payments.Application.Abstractions.Messaging;
 using FiapCloudGames.Payments.Application.Abstractions.Payments;
 using FiapCloudGames.Payments.Application.Abstractions.Persistence;
 using FiapCloudGames.Payments.Domain.Payments;
 using FiapCloudGames.Payments.Infrastructure.Health;
+using FiapCloudGames.Payments.Infrastructure.Messaging;
 using FiapCloudGames.Payments.Infrastructure.Payments;
 using FiapCloudGames.Payments.Infrastructure.Persistence;
 using FiapCloudGames.Payments.Infrastructure.Persistence.Repositories;
@@ -36,34 +38,60 @@ public static class DependencyInjection
     }
 
     public static IServiceCollection AddPaymentsProcessing(
-    this IServiceCollection services,
-    IConfiguration configuration)
-{
-    services.AddPaymentsApplication();
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddPaymentsApplication();
+        services.AddPaymentsPersistence(configuration);
+        services.AddSingleton<IPaymentProvider, FakePaymentProvider>();
+        services.AddScoped<IIntegrationEventPublisher, MassTransitIntegrationEventPublisher>();
 
-    services.AddPaymentsPersistence(configuration);
+        services
+            .AddOptions<RabbitMqOptions>()
+            .Bind(configuration.GetSection(RabbitMqOptions.SectionName))
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.Host),
+                "RabbitMq:Host é obrigatório.")
+            .Validate(
+                options => options.Port > 0,
+                "RabbitMq:Port deve ser maior que zero.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.VirtualHost),
+                "RabbitMq:VirtualHost é obrigatório.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.Username),
+                "RabbitMq:Username é obrigatório.")
+            .Validate(
+                options => !string.IsNullOrWhiteSpace(options.Password),
+                "RabbitMq:Password é obrigatório.")
+            .Validate(
+                options => HasConfiguredTopology(options.Topology),
+                "Todos os nomes em RabbitMq:Topology são obrigatórios.")
+            .ValidateOnStart();
 
-    services.AddSingleton<IPaymentProvider, FakePaymentProvider>();
+        return services;
+    }
 
-    return services;
-}
+    public static IServiceCollection AddPaymentsInfrastructure(
+        this IServiceCollection services,
+        IConfiguration configuration)
+    {
+        services.AddPaymentsProcessing(configuration);
 
-   public static IServiceCollection AddPaymentsInfrastructure(
-    this IServiceCollection services,
-    IConfiguration configuration)
-{
-    services.AddPaymentsProcessing(configuration);
+        services.AddFiapServiceAuthentication(configuration);
 
-    services.AddFiapServiceAuthentication(configuration);
+        services
+            .AddHealthChecks()
+            .AddCheck<PaymentsDatabaseHealthCheck>(
+                "payments-database",
+                tags: ["ready"]);
 
-    services
-        .AddHealthChecks()
-        .AddCheck<PaymentsDatabaseHealthCheck>(
-            "payments-database",
-            tags: ["ready"]);
+        return services;
+    }
 
-    return services;
-}
-
-    
+    private static bool HasConfiguredTopology(RabbitMqTopologyOptions topology) =>
+        !string.IsNullOrWhiteSpace(topology.Exchanges.PaymentRequested) &&
+        !string.IsNullOrWhiteSpace(topology.Exchanges.PaymentApproved) &&
+        !string.IsNullOrWhiteSpace(topology.Exchanges.PaymentRejected) &&
+        !string.IsNullOrWhiteSpace(topology.Queues.PaymentRequested);
 }

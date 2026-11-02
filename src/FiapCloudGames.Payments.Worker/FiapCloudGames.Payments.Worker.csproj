@@ -1,7 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk.Worker">
 
   <ItemGroup>
-  <PackageReference Include="FiapCloudGames.BuildingBlocks" />
+    <ProjectReference Include="$(LocalBuildingBlocksProject)" Condition="'$(UseLocalBuildingBlocks)' == 'true'" />
+    <PackageReference Include="FiapCloudGames.BuildingBlocks" Condition="'$(UseLocalBuildingBlocks)' != 'true'" />
     <PackageReference Include="Microsoft.Extensions.Hosting" />
     <PackageReference Include="MassTransit.RabbitMQ" />
   </ItemGroup>
@@ -10,7 +11,7 @@
     <ProjectReference Include="../FiapCloudGames.Payments.Application/FiapCloudGames.Payments.Application.csproj" />
     <ProjectReference Include="../FiapCloudGames.Payments.Domain/FiapCloudGames.Payments.Domain.csproj" />
     <ProjectReference Include="../FiapCloudGames.Payments.Infrastructure/FiapCloudGames.Payments.Infrastructure.csproj" />
-    <ProjectReference Include="..\FiapCloudGames.Payments.Contracts\FiapCloudGames.Payments.Contracts.csproj" />
+    <ProjectReference Include="../FiapCloudGames.Payments.Contracts/FiapCloudGames.Payments.Contracts.csproj" />
   </ItemGroup>
 
 </Project>

@@ -16,13 +16,12 @@ public sealed class CreatePaymentService(
 {
     public async Task<PaymentResult> ExecuteAsync(CreatePaymentInput input, CancellationToken cancellationToken)
     {
-        if (input.OrderId == Guid.Empty) throw AppException.Validation("orderId é obrigatório.");
-        if (input.UserId == Guid.Empty) throw AppException.Validation("userId é obrigatório.");
-        if (input.Amount <= 0) throw AppException.Validation("amount deve ser maior que zero.");
-        if (string.IsNullOrWhiteSpace(input.IdempotencyKey)) throw AppException.Validation("idempotencyKey é obrigatório.");
-        if (input.IdempotencyKey.Length > 128) throw AppException.Validation("idempotencyKey deve possuir no máximo 128 caracteres.");
+        ArgumentNullException.ThrowIfNull(input);
+        Validate(input);
 
-        var existing = await payments.GetByIdempotencyKeyAsync(input.IdempotencyKey.Trim(), cancellationToken);
+        var idempotencyKey = input.IdempotencyKey.Trim();
+
+        var existing = await payments.GetByIdempotencyKeyAsync(idempotencyKey, cancellationToken);
         if (existing is not null)
         {
             if (existing.OrderId != input.OrderId || existing.UserId != input.UserId || existing.Amount != decimal.Round(input.Amount, 2, MidpointRounding.ToEven))
@@ -39,11 +38,49 @@ public sealed class CreatePaymentService(
             input.UserId,
             input.Amount,
             provider.Name,
-            input.IdempotencyKey,
+            idempotencyKey,
             correlation.CorrelationId,
             clock.GetUtcNow());
         await payments.AddAsync(payment, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
         return PaymentResult.From(payment);
+    }
+
+    private static void Validate(CreatePaymentInput input)
+    {
+        List<AppError> errors = [];
+
+        if (input.OrderId == Guid.Empty)
+            errors.Add(new AppError("O identificador do pedido é obrigatório.", "orderId"));
+
+        if (input.UserId == Guid.Empty)
+            errors.Add(new AppError("O identificador do usuário é obrigatório.", "userId"));
+
+        if (input.Amount <= 0)
+            errors.Add(new AppError("O valor deve ser maior que zero.", "amount"));
+
+        if (string.IsNullOrWhiteSpace(input.IdempotencyKey))
+        {
+            errors.Add(new AppError("A chave de idempotência é obrigatória.", "idempotencyKey"));
+        }
+        else
+        {
+            var idempotencyKey = input.IdempotencyKey.Trim();
+            var expectedKey = PaymentIdempotencyKey.ForOrder(input.OrderId);
+
+            if (idempotencyKey.Length > 128)
+                errors.Add(new AppError("A chave de idempotência deve possuir no máximo 128 caracteres.", "idempotencyKey"));
+
+            if (input.OrderId != Guid.Empty &&
+                !string.Equals(idempotencyKey, expectedKey, StringComparison.Ordinal))
+            {
+                errors.Add(new AppError(
+                    "A chave de idempotência não corresponde ao pedido informado.",
+                    "idempotencyKey"));
+            }
+        }
+
+        if (errors.Count > 0)
+            throw AppException.Validation(errors);
     }
 }

@@ -1,18 +1,17 @@
-
 using FiapCloudGames.BuildingBlocks.Exceptions;
 using FiapCloudGames.BuildingBlocks.Observability;
+using FiapCloudGames.Payments.Application.Abstractions.Messaging;
 using FiapCloudGames.Payments.Application.Abstractions.Payments;
 using FiapCloudGames.Payments.Application.Abstractions.Persistence;
 using FiapCloudGames.Payments.Application.Features.Payments.Common;
 using FiapCloudGames.Payments.Contracts.Events.V1;
 using FiapCloudGames.Payments.Domain.Payments;
-using MassTransit;
 
 namespace FiapCloudGames.Payments.Application.Features.Payments.Confirm;
 
 public sealed class ConfirmPaymentService(
     IPaymentRepository payments,
-    IPublishEndpoint publishEndpoint,
+    IIntegrationEventPublisher events,
     IPaymentsUnitOfWork unitOfWork,
     IPaymentProvider provider,
     ICorrelationContext correlation,
@@ -34,22 +33,10 @@ public sealed class ConfirmPaymentService(
             throw AppException.BusinessRule(
                 "O estado atual do pagamento não permite processamento.");
 
-        PaymentProviderResult result;
-
-        try
-        {
-            result = await provider.ChargeAsync(
-                payment.Id,
-                payment.Amount,
-                cancellationToken);
-        }
-        catch (Exception ex) when (ex is not OperationCanceledException)
-        {
-            // Erro técnico não significa pagamento recusado.
-            // Mantém Pending para permitir retry posteriormente.
-            throw AppException.BusinessRule(
-                "Não foi possível processar o pagamento no provider.");
-        }
+        var result = await provider.ChargeAsync(
+            payment.Id,
+            payment.Amount,
+            cancellationToken);
 
         var now = clock.GetUtcNow();
 
@@ -66,18 +53,15 @@ public sealed class ConfirmPaymentService(
 
             payment.MarkFailed(failureReason, now);
 
-            await publishEndpoint.Publish(
-                new PaymentFailedEventV1(
-                    payment.Id,
+            await events.PublishAsync(
+                new PaymentRejectedEventV1(
+                    Guid.NewGuid(),
                     payment.OrderId,
                     payment.UserId,
                     payment.Amount,
                     failureReason,
                     now),
-                context =>
-                {
-                    ApplyCorrelationId(context, correlationId);
-                },
+                correlationId,
                 cancellationToken);
 
             await unitOfWork.SaveChangesAsync(cancellationToken);
@@ -88,32 +72,18 @@ public sealed class ConfirmPaymentService(
         // Pagamento aprovado.
         payment.MarkPaid(result.TransactionId, now);
 
-        await publishEndpoint.Publish(
-            new PaymentPaidEventV1(
-                payment.Id,
+        await events.PublishAsync(
+            new PaymentApprovedEventV1(
+                Guid.NewGuid(),
                 payment.OrderId,
                 payment.UserId,
                 payment.Amount,
-                payment.ProviderTransactionId!,
                 now),
-            context =>
-            {
-                ApplyCorrelationId(context, correlationId);
-            },
+            correlationId,
             cancellationToken);
 
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         return PaymentResult.From(payment);
-    }
-
-    private static void ApplyCorrelationId(
-        PublishContext context,
-        string? correlationId)
-    {
-        if (Guid.TryParse(correlationId, out var parsed))
-            {
-                context.CorrelationId = parsed;
-            }
     }
 }

@@ -14,7 +14,6 @@ public static class DependencyInjection
             options.AddPolicy(PaymentsPolicies.Create, policy => policy.RequireAuthenticatedUser().RequireServiceToken().RequireScopes("payments.create"));
             options.AddPolicy(PaymentsPolicies.Read, policy => policy.RequireAuthenticatedUser().RequireServiceToken().RequireScopes("payments.read"));
             options.AddPolicy(PaymentsPolicies.Confirm, policy => policy.RequireAuthenticatedUser().RequireServiceToken().RequireScopes("payments.confirm"));
-            options.AddPolicy(PaymentsPolicies.Cancel, policy => policy.RequireAuthenticatedUser().RequireServiceToken().RequireScopes("payments.cancel"));
         });
         return services;
     }

@@ -22,9 +22,16 @@ public sealed class PaymentsController : ControllerBase
         [FromServices] CreatePaymentService service,
         CancellationToken cancellationToken)
     {
-        var result = await service.ExecuteAsync(request.ToInput(), cancellationToken);
+        var result = await service.ExecuteAsync(
+            request.ToInput(),
+            cancellationToken);
+
         var response = PaymentResponse.From(result);
-        return CreatedAtRoute(GetByIdRoute, new { id = response.Id }, response);
+
+        return CreatedAtRoute(
+            GetByIdRoute,
+            new { id = response.Id },
+            response);
     }
 
     [Authorize(Policy = PaymentsPolicies.Read)]

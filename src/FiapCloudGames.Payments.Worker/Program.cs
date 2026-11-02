@@ -2,9 +2,11 @@ using FiapCloudGames.BuildingBlocks.Exceptions;
 using FiapCloudGames.BuildingBlocks.Hosting;
 using FiapCloudGames.BuildingBlocks.Observability;
 using FiapCloudGames.Payments.Infrastructure;
+using FiapCloudGames.Payments.Infrastructure.Messaging;
 using FiapCloudGames.Payments.Infrastructure.Persistence;
 using FiapCloudGames.Payments.Worker;
 using MassTransit;
+using Microsoft.Extensions.Options;
 
 var builder = Host.CreateApplicationBuilder(args);
 
@@ -31,51 +33,30 @@ builder.Services.AddMassTransit(x =>
 
     x.UsingRabbitMq((context, cfg) =>
     {
-        var rabbitHost =
-            builder.Configuration["RabbitMq:Host"]
-            ?? "localhost";
+        var options = context
+            .GetRequiredService<IOptions<RabbitMqOptions>>()
+            .Value;
 
-        var rabbitPort =
-            ushort.TryParse(
-                builder.Configuration["RabbitMq:Port"],
-                out var port)
-                ? port
-                : (ushort)5672;
-
-        var rabbitUsername =
-            builder.Configuration["RabbitMq:Username"]
-            ?? "guest";
-
-        var rabbitPassword =
-            builder.Configuration["RabbitMq:Password"]
-            ?? "guest";
-
-        var exchange =
-            builder.Configuration["RabbitMq:Exchange"]
-            ?? "fcg.events";
+        RabbitMqTopologyConfigurator.Configure(
+            cfg,
+            options.Topology.Exchanges);
 
         cfg.Host(
-            rabbitHost,
-            rabbitPort,
-            "/",
+            options.Host,
+            options.Port,
+            options.VirtualHost,
             host =>
             {
-                host.Username(rabbitUsername);
-                host.Password(rabbitPassword);
+                host.Username(options.Username);
+                host.Password(options.Password);
             });
 
         cfg.ReceiveEndpoint(
-            "fcg.payments.payment-requested",
+            options.Topology.Queues.PaymentRequested,
             endpoint =>
             {
                 endpoint.PrefetchCount = 1;
                 endpoint.ConcurrentMessageLimit = 1;
-
-                // Compatibilidade com os eventos JSON atuais
-                // publicados sem envelope MassTransit.
-                endpoint.UseRawJsonDeserializer(
-                    RawSerializerOptions.All,
-                    isDefault: true);
 
                 endpoint.UseMessageRetry(retry =>
                 {
@@ -89,17 +70,6 @@ builder.Services.AddMassTransit(x =>
 
                 endpoint.UseEntityFrameworkOutbox
                     <PaymentsDbContext>(context);
-
-                // Mantém compatibilidade com a topologia atual:
-                // fcg.events -> payments.requested
-                endpoint.Bind(
-                    exchange,
-                    binding =>
-                    {
-                        binding.ExchangeType = "topic";
-                        binding.RoutingKey =
-                            "payments.requested";
-                    });
 
                 endpoint.ConfigureConsumer
                     <PaymentRequestedConsumer>(context);

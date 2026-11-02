@@ -2,11 +2,12 @@
   <ItemGroup>
     <ProjectReference Include="../FiapCloudGames.Payments.Application/FiapCloudGames.Payments.Application.csproj" />
     <ProjectReference Include="../FiapCloudGames.Payments.Domain/FiapCloudGames.Payments.Domain.csproj" />
-    <PackageReference Include="FiapCloudGames.BuildingBlocks" />
-    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+    <ProjectReference Include="$(LocalBuildingBlocksProject)" Condition="'$(UseLocalBuildingBlocks)' == 'true'" />
+    <PackageReference Include="FiapCloudGames.BuildingBlocks" Condition="'$(UseLocalBuildingBlocks)' != 'true'" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="MassTransit.EntityFrameworkCore" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="FiapCloudGames.Payments.Migrations" />

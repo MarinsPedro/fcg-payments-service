@@ -1,5 +1,5 @@
+using FiapCloudGames.BuildingBlocks.Exceptions;
 using FiapCloudGames.Payments.Application.Features.Payments.Create;
-using FiapCloudGames.Payments.Contracts.Events;
 using FiapCloudGames.Payments.Contracts.Events.V1;
 using MassTransit;
 
@@ -15,9 +15,10 @@ public sealed class PaymentRequestedConsumer(
         ConsumeContext<PaymentRequestedEventV1> context)
     {
         var paymentRequested = context.Message;
+        Validate(paymentRequested);
 
         correlationContext.Set(
-            context.CorrelationId?.ToString());
+            context.CorrelationId?.ToString() ?? paymentRequested.OrderId.ToString());
 
         logger.LogInformation(
             "Registrando intenção de pagamento. " +
@@ -41,5 +42,24 @@ public sealed class PaymentRequestedConsumer(
             "O processamento ocorrerá posteriormente pela API HTTP.",
             payment.Id,
             payment.Status);
+    }
+
+    private static void Validate(PaymentRequestedEventV1 message)
+    {
+        List<AppError> errors = [];
+
+        if (message.EventId == Guid.Empty)
+            errors.Add(new AppError("O identificador do evento é obrigatório.", "eventId"));
+
+        if (message.OccurredAtUtc == default ||
+            message.OccurredAtUtc.Offset != TimeSpan.Zero)
+        {
+            errors.Add(new AppError(
+                "A data de ocorrência do evento deve estar em UTC.",
+                "occurredAtUtc"));
+        }
+
+        if (errors.Count > 0)
+            throw AppException.Validation(errors);
     }
 }

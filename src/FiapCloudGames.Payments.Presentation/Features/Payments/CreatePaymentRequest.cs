@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using FiapCloudGames.Payments.Application.Features.Payments.Common;
 using FiapCloudGames.Payments.Application.Features.Payments.Create;
 
 namespace FiapCloudGames.Payments.Presentation.Features.Payments;
@@ -12,10 +13,12 @@ public sealed record CreatePaymentRequest(
         "0.01",
         "9999999999999999.99",
         ParseLimitsInInvariantCulture = true)]
-    decimal Amount,
-
-    [param: Required, MaxLength(128)] string IdempotencyKey)
+    decimal Amount)
 {
     public CreatePaymentInput ToInput() =>
-        new(OrderId, UserId, Amount, IdempotencyKey);
+        new(
+            OrderId,
+            UserId,
+            Amount,
+            PaymentIdempotencyKey.ForOrder(OrderId));
 }

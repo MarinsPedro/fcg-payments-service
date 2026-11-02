@@ -145,7 +145,7 @@ namespace FiapCloudGames.Payments.Migrations.Migrations
         }
 
         /// <inheritdoc />
-        
+
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(

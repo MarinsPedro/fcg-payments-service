@@ -3,8 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="../FiapCloudGames.Payments.Domain/FiapCloudGames.Payments.Domain.csproj" />
     <ProjectReference Include="../FiapCloudGames.Payments.Contracts/FiapCloudGames.Payments.Contracts.csproj" />
-
-    <PackageReference Include="FiapCloudGames.BuildingBlocks" />
-    <PackageReference Include="MassTransit.RabbitMQ" />
+    <ProjectReference Include="$(LocalBuildingBlocksProject)" Condition="'$(UseLocalBuildingBlocks)' == 'true'" />
+    <PackageReference Include="FiapCloudGames.BuildingBlocks" Condition="'$(UseLocalBuildingBlocks)' != 'true'" />
   </ItemGroup>
 </Project>
