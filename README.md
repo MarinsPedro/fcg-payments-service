@@ -156,6 +156,52 @@ payments.confirm
 payments.cancel
 ```
 
+## Variáveis de ambiente
+
+No ambiente do projeto os valores vêm do orquestrador (`config/*-payments-*.env` e Secrets); o `appsettings.json` do serviço fica vazio. `__` equivale a `:` na configuração do .NET.
+
+### API (`payments-api`)
+
+| Variável | Obrigatória | Onde fica no cluster | Exemplo | Para que serve |
+|---|---|---|---|---|
+| `ConnectionStrings__Database` | sim | Secret (`fcg-dev-secrets`, `payments-connection-string`) | `Host=postgres;Database=fcg_payments;...` | Conexão com o PostgreSQL |
+| `RabbitMq__Host` | sim | ConfigMap | `rabbitmq` | Host do RabbitMQ |
+| `RabbitMq__Port` | não | ConfigMap | `5672` | Porta do RabbitMQ |
+| `RabbitMq__VirtualHost` | não | ConfigMap | `/` | Virtual host |
+| `RabbitMq__Username`, `RabbitMq__Password` | sim | Secret (`fcg-dev-secrets`) | - | Credenciais do broker |
+| `RabbitMq__Topology__Exchanges__PaymentRequested` | sim | ConfigMap | `payments.payment-requested.v1` | Exchange do pedido de pagamento |
+| `RabbitMq__Topology__Exchanges__PaymentApproved` | sim | ConfigMap | `payments.payment-approved.v1` | Exchange do pagamento aprovado |
+| `RabbitMq__Topology__Exchanges__PaymentRejected` | sim | ConfigMap | `payments.payment-rejected.v1` | Exchange do pagamento rejeitado |
+| `RabbitMq__Topology__Queues__PaymentRequested` | sim | ConfigMap | `fcg-payments-payment-requested` | Fila de entrada do pedido de pagamento |
+| `FakePaymentProvider__ApprovalRate` | não | ConfigMap | `90` | Percentual de aprovação do provedor simulado (0 a 100; padrão 90) |
+| `Authentication__Authority` | sim | ConfigMap | `http://identity-api:8080` | Identity que valida os tokens |
+| `Authentication__MetadataAddress` | não | ConfigMap | `http://identity-api:8080/.well-known/openid-configuration` | Endereço dos metadados do Identity |
+| `Authentication__Audience` | sim | ConfigMap | `payments-api` | Audience aceita |
+| `Authentication__Issuer` | sim | ConfigMap | `fiap-cloud-games-identity` | Emissor esperado |
+| `Authentication__AllowedTokenUses__0` | sim | ConfigMap | `service` | Só tokens de serviço |
+| `Authentication__RequireHttpsMetadata` | não | ConfigMap | `false` | `false` em ambiente local |
+| `ASPNETCORE_ENVIRONMENT`, `ASPNETCORE_URLS` | não | ConfigMap | `Development`, `http://+:8080` | Ambiente e porta |
+
+### Worker (`payments-worker`)
+
+| Variável | Obrigatória | Onde fica | Para que serve |
+|---|---|---|---|
+| `ConnectionStrings__Database` | sim | Secret | Banco, tabelas do Outbox e pagamentos |
+| `RabbitMq__Host`, `__Port`, `__VirtualHost` | sim / não | ConfigMap | Conexão com o RabbitMQ |
+| `RabbitMq__Username`, `RabbitMq__Password` | sim | Secret | Credenciais do broker |
+| `RabbitMq__Topology__Exchanges__*` e `RabbitMq__Topology__Queues__PaymentRequested` | sim | ConfigMap | Exchanges e fila (as mesmas da API) |
+| `FakePaymentProvider__ApprovalRate` | não | ConfigMap | Taxa de aprovação do provedor simulado |
+| `Outbox__BatchSize` | não | ConfigMap | Mensagens do Outbox por lote (`20`) |
+| `Outbox__PollingIntervalSeconds` | não | ConfigMap | Intervalo de leitura do Outbox em segundos (`2`) |
+| `DOTNET_ENVIRONMENT` | não | ConfigMap | Ambiente do Worker |
+
+### Migrations (`payments-migrations`)
+
+| Variável | Obrigatória | Onde fica | Para que serve |
+|---|---|---|---|
+| `ConnectionStrings__Database` | sim | Secret | Conexão usada para aplicar as migrations |
+| `DOTNET_ENVIRONMENT` | não | ConfigMap | Ambiente do executável |
+
 ## Desenvolvimento
 
 ```powershell
@@ -166,4 +212,4 @@ dotnet test .\FiapCloudGames.Payments.slnx
 
 ## Execução integrada
 
-Docker Compose e Kubernetes são mantidos no repositório `fcg-orchestration`.
+Docker Compose e Kubernetes são mantidos no repositório do orquestrador (`fgc-orchestrator-service`, clonado como a pasta `fcg-orchestration`).
